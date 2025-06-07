@@ -1,13 +1,20 @@
 import streamlit as st
-import fasttext
+import joblib
+import re
+
+# Preprocessing function
+def preprocess(text):
+    text = re.sub(r'[^\w\s\']',' ', text)
+    text = re.sub(' +', ' ', text)
+    return text.strip().lower()
 
 @st.cache_resource
 def load_model():
-    return fasttext.load_model("fasttext_supervised.bin")
+    return joblib.load("nb_pipeline_model.joblib")
 
 model = load_model()
 
-st.title("🌟 Star Rating Predictor with FastText")
+st.title("⭐ Star Rating Predictor (Naive Bayes + TF-IDF)")
 
 user_input = st.text_area("Enter your review text:")
 
@@ -15,7 +22,6 @@ if st.button("Predict Rating"):
     if not user_input.strip():
         st.warning("Please enter some review text!")
     else:
-        label, prob = model.predict(user_input)
-        rating = int(label[0].replace("__label__", ""))
-        st.success(f"Predicted Star Rating: ⭐ {rating} stars")
-        st.caption(f"Confidence Score: {prob[0]:.2f}")
+        processed_text = preprocess(user_input)
+        prediction = model.predict([processed_text])[0]
+        st.success(f"Predicted Star Rating: ⭐ {prediction} stars")
